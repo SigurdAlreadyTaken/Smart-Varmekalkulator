@@ -11,170 +11,262 @@
     <meta name="apple-mobile-web-app-title" content="VarmeCalc">
     <meta name="theme-color" content="#0f172a">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f8fafc; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            touch-action: manipulation;
         }
-        .card { background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-        .gradient-header { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); }
-        input[type="range"] { accent-color: #3b82f6; }
-        
-        /* PWA Installasjons-hint animasjon */
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-10px);}
-            60% {transform: translateY(-5px);}
+
+        .card { 
+            background: white; 
+            border-radius: 2rem; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); 
         }
-        .animate-bounce-slow {
-            animation: bounce 2s infinite;
+
+        .gradient-header { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+        }
+
+        input[type="range"] { 
+            accent-color: #3b82f6; 
+        }
+
+        .source-pill {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        .safe-area-inset-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
         }
     </style>
 </head>
-<body class="p-4 md:p-8 pb-24">
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
 
-    <div class="max-w-2xl mx-auto card overflow-hidden border border-gray-100">
+    <div class="w-full max-w-md card overflow-hidden border border-gray-100 flex flex-col">
         <!-- Header -->
-        <header class="gradient-header p-6 text-white text-center">
-            <h1 class="text-2xl font-bold">Smart Varmekalkulator</h1>
-            <p class="text-sm opacity-90 text-slate-300 uppercase tracking-wider font-semibold mt-1">Soverom & Oppvarming</p>
+        <header class="gradient-header p-8 text-white text-center">
+            <h1 class="text-2xl font-bold tracking-tight">Varmekalkulator</h1>
+            <p class="text-xs opacity-70 uppercase tracking-widest font-semibold mt-1 text-blue-400">Smart energi-estimat</p>
+            <div class="mt-4 flex justify-center">
+                <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400 border border-slate-700 px-3 py-1 rounded-full bg-slate-800/30">
+                    Beregning for kun ett rom
+                </span>
+            </div>
         </header>
 
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Venstre kolonne: Innstillinger -->
-            <div class="space-y-6">
-                <section>
-                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                        Boligstandard
-                    </h3>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Byggeår / Isolasjon</label>
-                        <select id="insulationSelect" onchange="calculate()" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700 font-medium cursor-pointer">
-                            <option value="1.8">Gammelt (Før 1980)</option>
-                            <option value="1.2" selected>Middels (1980-2010)</option>
-                            <option value="0.7">Moderne (TEK10/17)</option>
-                            <option value="0.4">Passivhus</option>
-                        </select>
+        <div class="p-6 space-y-8 flex-1">
+            
+            <!-- Valg av Varmekilde -->
+            <section>
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+                        <!-- Oppdatert ikon: To bølgete striper -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 5c1 1 1 3 0 4s-1 3 0 4 1 3 0 4"></path>
+                            <path d="M16 5c1 1 1 3 0 4s-1 3 0 4 1 3 0 4"></path>
+                        </svg>
                     </div>
-                </section>
+                    <h3 class="font-bold text-gray-800">Varmekilde</h3>
+                </div>
+                <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-2xl">
+                    <button onclick="setSource('panel')" id="btnPanel" class="source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 bg-white text-blue-600 shadow-sm">
+                        Veggovn
+                    </button>
+                    <button onclick="setSource('cable')" id="btnCable" class="source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-gray-500">
+                        Varmekabel
+                    </button>
+                </div>
+                <input type="hidden" id="heatSource" value="panel">
+            </section>
+
+            <!-- Boligstandard -->
+            <section>
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-800">Boligstandard</h3>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wide">Byggeår / Isolasjon</label>
+                    <select id="insulationSelect" onchange="calculate()" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700 font-semibold cursor-pointer appearance-none">
+                        <option value="1.8">Gammelt (Før 1980)</option>
+                        <option value="1.2" selected>Middels (1980-2010)</option>
+                        <option value="0.7">Moderne (TEK10/17)</option>
+                        <option value="0.4">Passivhus</option>
+                    </select>
+                </div>
+            </section>
+            
+            <!-- Rom & Klima -->
+            <section class="space-y-5">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-800">Rom & Klima</h3>
+                </div>
                 
-                <section class="space-y-4">
-                    <h3 class="font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                        Rom & Klima
-                    </h3>
-                    <div>
-                        <label class="flex justify-between text-sm font-semibold text-gray-600 mb-1">
-                            Romstørrelse <span><span id="m2Val" class="text-blue-600">15</span> m²</span>
-                        </label>
-                        <input type="range" id="m2Input" min="5" max="40" value="15" oninput="calculate()" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <div>
+                    <div class="flex justify-between text-sm font-bold text-gray-600 mb-3">
+                        <span>Romstørrelse</span>
+                        <span class="text-blue-600"><span id="m2Val">15</span> m²</span>
                     </div>
+                    <input type="range" id="m2Input" min="5" max="60" value="15" oninput="calculate()" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ute (°C)</label>
-                            <input type="number" id="outTempInput" value="0" oninput="calculate()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Inne (°C)</label>
-                            <input type="number" id="inTempInput" value="20" oninput="calculate()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
-                        </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Utetemp (°C)</label>
+                        <input type="number" id="outTempInput" value="0" oninput="calculate()" class="w-full bg-transparent font-bold text-gray-800 outline-none text-center">
                     </div>
-
-                    <div class="flex items-center justify-between bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-bold text-emerald-800">Nattsenking</span>
-                            <span class="text-[10px] text-emerald-600 font-medium uppercase tracking-tight">-4°C i 8 timer</span>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="nightSetback" onchange="calculate()" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                    </div>
-                </section>
-
-                <section class="pt-2">
-                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                        Strøm & Effekt
-                    </h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Ovn (Watt)</label>
-                            <input type="number" id="wattInput" value="1000" oninput="calculate()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Pris (kr/kWh)</label>
-                            <input type="number" id="priceInput" value="1.80" step="0.1" oninput="calculate()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Høyre kolonne: Resultater -->
-            <div class="flex flex-col space-y-4">
-                <div class="bg-slate-900 rounded-[2rem] p-8 flex-1 flex flex-col justify-center text-white relative overflow-hidden shadow-inner">
-                    <span class="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Kostnad per døgn</span>
-                    <div class="text-6xl font-black text-white mb-2 tracking-tighter">
-                        <span id="dailyCost">0.00</span><span class="text-xl ml-1 text-slate-500 font-medium">kr</span>
-                    </div>
-                    
-                    <div id="statusBadge" class="inline-block self-start px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-8 border transition-colors duration-300">
-                        Beregner...
-                    </div>
-                    
-                    <div class="w-full space-y-4 text-sm border-t border-slate-800 pt-8">
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">Behov:</span>
-                            <span id="heatLoss" class="font-bold text-white text-base">0 W</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">Spart (natt):</span>
-                            <span id="savingVal" class="font-bold text-emerald-400 text-base">0.00 kr</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400">Driftstid:</span>
-                            <span id="dutyCycle" class="font-bold text-blue-400 text-base">0%</span>
-                        </div>
+                    <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 text-center">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Innetemp (°C)</label>
+                        <input type="number" id="inTempInput" value="21" oninput="calculate()" class="w-full bg-transparent font-bold text-gray-800 outline-none text-center">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm text-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Uke</p>
-                        <p id="weeklyCost" class="text-2xl font-black text-gray-800">0 kr</p>
+                <!-- Nattsenking Toggle -->
+                <div id="nightSetbackContainer" class="flex items-center justify-between bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50 transition-all duration-300">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-emerald-900">Nattsenking</span>
+                        <span id="nightNote" class="text-[10px] text-emerald-600 font-medium">-4°C i 8 timer</span>
                     </div>
-                    <div class="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm text-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Mnd</p>
-                        <p id="monthlyCost" class="text-2xl font-black text-gray-800">0 kr</p>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="nightSetback" onchange="calculate()" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Innstillinger & Pris -->
+            <section class="space-y-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <h3 class="font-bold text-gray-800">Effekt & Strømpris</h3>
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-sm font-bold text-gray-600 mb-3">
+                        <span class="max-w-[180px]">Strømpris m/nettleie</span>
+                        <span class="text-blue-600"><span id="priceVal">1.80</span> kr/kWh</span>
+                    </div>
+                    <input type="range" id="priceInput" min="0.5" max="10" step="0.1" value="1.8" oninput="calculate()" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-wide">Ovnens effekt (Watt)</label>
+                    <input type="number" id="wattInput" value="1000" oninput="calculate()" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </section>
+
+            <!-- Resultat Panel -->
+            <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl mt-4">
+                <span class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">Døgnpris</span>
+                <div class="flex items-baseline gap-1 mb-6">
+                    <span id="dailyCost" class="text-5xl font-black tracking-tighter">0.00</span>
+                    <span class="text-lg text-slate-500 font-bold">kr</span>
+                </div>
+                
+                <div class="space-y-4 border-t border-slate-800 pt-6">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400 font-medium text-[11px]">Behov for oppvarming:</span>
+                        <span id="heatLoss" class="font-bold text-white">0 W</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400 font-medium text-[11px]">Driftstid (termostat):</span>
+                        <span id="dutyCycle" class="font-bold text-blue-400">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400 font-medium text-[11px]">Effekt av kilde:</span>
+                        <span id="sourceBonus" class="font-bold text-amber-400">Normal</span>
                     </div>
                 </div>
+
+                <!-- Status Indikator -->
+                <div id="statusBadge" class="mt-6 text-[10px] font-bold uppercase py-2 px-4 rounded-full border border-slate-700 bg-slate-800/50 text-center tracking-widest transition-all">
+                    Beregner...
+                </div>
             </div>
+
+            <!-- Oppsummering Kort -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-50 text-center shadow-sm">
+                    <p class="text-[9px] text-blue-400 font-bold uppercase mb-1 tracking-tighter">Ukespris</p>
+                    <p id="weeklyCost" class="text-xl font-black text-slate-800">0 kr</p>
+                </div>
+                <div class="bg-indigo-50/50 p-4 rounded-3xl border border-indigo-50 text-center shadow-sm">
+                    <p class="text-[9px] text-indigo-400 font-bold uppercase mb-1 tracking-tighter">Månedspris</p>
+                    <p id="monthlyCost" class="text-xl font-black text-slate-800">0 kr</p>
+                </div>
+            </div>
+
+            <!-- Informasjonsseksjon -->
+            <section class="bg-white border border-gray-100 rounded-[2rem] p-6 space-y-4 shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                    <h4 class="font-bold text-sm text-gray-800 tracking-tight">Forskjeller i bruk</h4>
+                </div>
+                
+                <div class="space-y-3 text-[11px] leading-relaxed text-gray-600">
+                    <div class="flex gap-3">
+                        <div class="w-1 h-auto bg-blue-100 rounded-full flex-shrink-0"></div>
+                        <p><span class="font-bold text-gray-800">Komfort:</span> Varmekabler gir jevnere varme fra gulvet. Dette gjør at man ofte kan senke innetemperaturen med 1-2 grader uten tap av komfort.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1 h-auto bg-blue-100 rounded-full flex-shrink-0"></div>
+                        <p><span class="font-bold text-gray-800">Responstid:</span> Veggovner varmer opp luften umiddelbart. Varmekabler har lang oppvarmingstid (treghet), som gjør dem mindre egnet for hyppig nattsenking.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1 h-auto bg-blue-100 rounded-full flex-shrink-0"></div>
+                        <p><span class="font-bold text-gray-800">Sirkulasjon:</span> Veggovner skaper mer luftsirkulasjon (konveksjon), mens varmekabler gir en mer stabil luft uten samme grad av støvspredning.</p>
+                    </div>
+                </div>
+            </section>
         </div>
+
+        <footer class="p-8 text-[10px] text-gray-400 text-center leading-relaxed bg-gray-50/50">
+            Estimert forbruk basert på isolasjonsfaktor og temperaturdifferanse.<br>
+            Faktiske verdier kan variere med vind og solinnstråling.
+        </footer>
     </div>
 
-    <!-- PWA Installasjons-instruks (vises kun på mobil) -->
-    <div id="pwaNotice" class="fixed bottom-6 left-4 right-4 bg-white p-4 rounded-2xl shadow-2xl border border-blue-100 hidden z-50 animate-bounce-slow">
+    <!-- PWA Installasjons-instruks -->
+    <div id="pwaNotice" class="fixed bottom-6 left-4 right-4 bg-white p-5 rounded-3xl shadow-2xl border border-blue-100 hidden z-50 animate-slide-up safe-area-inset-bottom">
         <div class="flex items-center gap-4">
-            <div class="bg-blue-600 p-3 rounded-xl text-white">
+            <div class="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-200">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </div>
             <div class="flex-1">
-                <p class="text-sm font-bold text-gray-800">Installer som app</p>
-                <p class="text-xs text-gray-500">Trykk på delingsikonet og velg "Legg til på hjemskjerm"</p>
+                <p class="text-sm font-bold text-gray-800">Installer appen</p>
+                <p class="text-[11px] text-gray-500">Trykk på del-ikonet og velg <span class="font-bold text-gray-700">"Legg til på hjemskjerm"</span></p>
             </div>
-            <button onclick="document.getElementById('pwaNotice').remove()" class="text-gray-400">✕</button>
+            <button onclick="document.getElementById('pwaNotice').remove()" class="bg-gray-100 p-2 rounded-full text-gray-400">✕</button>
         </div>
     </div>
 
     <script>
-        // --- PWA LOGIKK ---
-        // Siden vi er i en simulert omgivelse, lager vi manifestet on-the-fly
+        // --- PWA SETUP ---
         const manifest = {
             "name": "Smart Varmekalkulator",
             "short_name": "VarmeCalc",
@@ -182,56 +274,87 @@
             "display": "standalone",
             "background_color": "#0f172a",
             "theme_color": "#0f172a",
-            "icons": [
-                {
-                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMwZjE3MmEiLz48cG9seWdvbiBwb2ludHM9IjI3Ny4zIDQyLjcgNjQuMSAyOTguNyAyNTYgMjk4LjcgMjM0LjcgNDY5LjMgNDQ3LjkgMjEzLjMgMjU2IDIxMy4zIDI3Ny4zIDQyLjciIGZpbGw9IiMzYjgyZjYiLz48L3N2Zz4=",
-                    "sizes": "512x512",
-                    "type": "image/png"
-                }
-            ]
+            "icons": [{
+                "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIGZpbGw9IiMwZjE3MmEiLz48cG9seWdvbiBwb2ludHM9IjI3Ny4zIDQyLjcgNjQuMSAyOTguNyAyNTYgMjk4LjcgMjM0LjcgNDY5LjMgNDQ3LjkgMjEzLjMgMjU2IDIxMy4zIDI3Ny4zIDQyLjciIGZpbGw9IiMzYjgyZjYiLz48L3N2Zz4=",
+                "sizes": "512x512",
+                "type": "image/png"
+            }]
         };
 
-        const stringManifest = JSON.stringify(manifest);
-        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         const manifestURL = URL.createObjectURL(blob);
         const link = document.createElement('link');
         link.rel = 'manifest';
         link.href = manifestURL;
         document.head.appendChild(link);
 
-        // Service Worker registrering
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', (e) => {
-                    self.skipWaiting();
-                });
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-                });
-            `;
+            const swCode = `self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));`;
             const swBlob = new Blob([swCode], {type: 'text/javascript'});
             const swURL = URL.createObjectURL(swBlob);
             navigator.serviceWorker.register(swURL).catch(() => {});
         }
 
-        // Vis installasjons-hint på iOS hvis den ikke er lagret ennå
-        if (window.navigator.standalone === false) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.navigator.standalone === true;
+        if (isIOS && !isStandalone) {
             setTimeout(() => {
-                document.getElementById('pwaNotice').classList.remove('hidden');
+                const notice = document.getElementById('pwaNotice');
+                if(notice) notice.classList.remove('hidden');
             }, 3000);
         }
 
-        // --- KALKULATOR LOGIKK ---
+        // --- VARMEKILDE LOGIKK ---
+        function setSource(type) {
+            document.getElementById('heatSource').value = type;
+            const btnPanel = document.getElementById('btnPanel');
+            const btnCable = document.getElementById('btnCable');
+            const nightContainer = document.getElementById('nightSetbackContainer');
+            const nightCheckbox = document.getElementById('nightSetback');
+            const nightNote = document.getElementById('nightNote');
+
+            if (type === 'panel') {
+                btnPanel.className = "source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 bg-white text-blue-600 shadow-sm";
+                btnCable.className = "source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-gray-500";
+                
+                nightContainer.style.opacity = "1";
+                nightContainer.style.pointerEvents = "auto";
+                nightNote.textContent = "-4°C i 8 timer";
+            } else {
+                btnCable.className = "source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 bg-white text-blue-600 shadow-sm";
+                btnPanel.className = "source-pill py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-gray-500";
+                
+                nightContainer.style.opacity = "0.4";
+                nightContainer.style.pointerEvents = "none";
+                nightCheckbox.checked = false;
+                nightNote.textContent = "Ikke anbefalt (tregt)";
+            }
+            calculate();
+        }
+
+        // --- KALKULERING ---
         function calculate() {
             const m2 = parseFloat(document.getElementById('m2Input').value);
             const outTemp = parseFloat(document.getElementById('outTempInput').value);
-            const inTemp = parseFloat(document.getElementById('inTempInput').value);
+            let inTemp = parseFloat(document.getElementById('inTempInput').value);
             const watt = parseFloat(document.getElementById('wattInput').value) || 0;
-            const price = parseFloat(document.getElementById('priceInput').value) || 0;
+            const price = parseFloat(document.getElementById('priceInput').value);
             const isolationFactor = parseFloat(document.getElementById('insulationSelect').value);
             const useNightSetback = document.getElementById('nightSetback').checked;
+            const source = document.getElementById('heatSource').value;
 
             document.getElementById('m2Val').textContent = m2;
+            document.getElementById('priceVal').textContent = price.toFixed(2);
+
+            const bonusDisplay = document.getElementById('sourceBonus');
+            if (source === 'cable') {
+                inTemp -= 2; 
+                bonusDisplay.textContent = "Sparer 2°C";
+                bonusDisplay.className = "font-bold text-emerald-400";
+            } else {
+                bonusDisplay.textContent = "Normal";
+                bonusDisplay.className = "font-bold text-amber-400";
+            }
 
             const deltaT = Math.max(0, inTemp - outTemp);
             const deltaTNight = Math.max(0, (inTemp - 4) - outTemp);
@@ -240,40 +363,35 @@
             const requiredPowerNight = (m2 * isolationFactor * deltaTNight) * 0.55;
 
             let kwhPerDay = 0;
-            let saving = 0;
 
             if (useNightSetback) {
                 const dayEnergy = (Math.min(watt, requiredPowerDay) / 1000) * 16;
                 const nightEnergy = (Math.min(watt, requiredPowerNight) / 1000) * 8;
                 kwhPerDay = dayEnergy + nightEnergy;
-                const energyWithoutSetback = (Math.min(watt, requiredPowerDay) / 1000) * 24;
-                saving = (energyWithoutSetback - kwhPerDay) * price;
             } else {
                 kwhPerDay = (Math.min(watt, requiredPowerDay) / 1000) * 24;
             }
 
+            const dailyCost = kwhPerDay * price;
             const avgRequiredPower = useNightSetback ? (requiredPowerDay * 16 + requiredPowerNight * 8) / 24 : requiredPowerDay;
             const dutyCycle = watt > 0 ? Math.min(1, avgRequiredPower / watt) : 0;
 
-            const dailyCost = kwhPerDay * price;
             document.getElementById('dailyCost').textContent = dailyCost.toFixed(2);
             document.getElementById('heatLoss').textContent = Math.round(requiredPowerDay) + " W";
             document.getElementById('dutyCycle').textContent = Math.round(dutyCycle * 100) + "%";
-            document.getElementById('savingVal').textContent = saving.toFixed(2) + " kr";
-            
             document.getElementById('weeklyCost').textContent = Math.round(dailyCost * 7) + " kr";
             document.getElementById('monthlyCost').textContent = Math.round(dailyCost * 30.4) + " kr";
 
             const status = document.getElementById('statusBadge');
-            if (dutyCycle >= 1) {
-                status.textContent = "Ovnen går kontinuerlig";
-                status.className = "inline-block self-start px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-8 bg-red-900/30 text-red-200 border-red-700/50";
+            if (dutyCycle >= 0.99 && watt > 0) {
+                status.textContent = "Ovn for liten for temp";
+                status.className = "mt-6 text-[10px] font-bold uppercase py-2 px-4 rounded-full border border-red-700 bg-red-900/30 text-red-200 text-center tracking-widest";
             } else if (dutyCycle > 0.6) {
                 status.textContent = "Høy belastning";
-                status.className = "inline-block self-start px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-8 bg-orange-900/30 text-orange-200 border-orange-700/50";
+                status.className = "mt-6 text-[10px] font-bold uppercase py-2 px-4 rounded-full border border-orange-700 bg-orange-900/30 text-orange-200 text-center tracking-widest";
             } else {
-                status.textContent = "Effektiv oppvarming";
-                status.className = "inline-block self-start px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-8 bg-emerald-900/30 text-emerald-300 border-emerald-700/50";
+                status.textContent = "Optimal drift";
+                status.className = "mt-6 text-[10px] font-bold uppercase py-2 px-4 rounded-full border border-emerald-700 bg-emerald-900/30 text-emerald-200 text-center tracking-widest";
             }
         }
 
